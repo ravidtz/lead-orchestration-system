@@ -1,2 +1,0 @@
-Supabase Project name: CRM Platform
-Password: W18QN9R17MpbHXp9
