@@ -1,7 +1,11 @@
 'use client'
 import { PageShell, PageHeader } from '@/components/layout/page-shell'
-import { Button, Badge, TableSkeleton } from '@/components/ui'
-import { EmptyState } from '@/components/shared/empty-state'
+import dynamic from 'next/dynamic'
+import { Button } from '@/components/ui'
+const Badge = dynamic(() => import('@/components/ui/badge').then(m => m.Badge), { loading: () => null })
+const TableSkeleton = dynamic(() => import('@/components/ui/skeleton').then(m => m.TableSkeleton), { loading: () => null })
+const EmptyState = dynamic(() => import('@/components/shared/empty-state').then(m => m.EmptyState), { loading: () => null })
+import React from 'react'
 import { api } from '@/lib/api-client'
 import useSWR from 'swr'
 import type { UserDTO } from '@crm/types'
@@ -39,15 +43,20 @@ export default function AdminUsersPage() {
 
         {!isLoading && data?.data.length === 0 && (
           <EmptyState title="אין משתמשים" />
-        )}
-
-        {data?.data.map(user => (
-          <div key={user.id} className="grid grid-cols-[2fr_2fr_1fr_1fr_1fr] gap-4 px-4 py-3.5 border-b border-border last:border-0 items-center text-sm">
-            <span className="font-medium text-text-primary">{user.fullName ?? '—'}</span>
-            <span className="text-text-secondary">{user.email}</span>
-            <Badge label={roleLabel(user.role)} color={roleColor(user.role) as any} />
-            <Badge label={user.isActive ? 'פעיל' : 'מושבת'} color={user.isActive ? 'green' : 'red'} />
-            <span className="text-text-secondary">{formatDate(user.createdAt)}</span>
+        {data?.data.map(React.useMemo(() => {
+          const UserRow = React.memo(function UserRow({ user }: { user: any }) {
+            return (
+              <div className="grid grid-cols-[2fr_2fr_1fr_1fr_1fr] gap-4 px-4 py-3.5 border-b border-border last:border-0 items-center text-sm">
+                <span className="font-medium text-text-primary">{user.fullName ?? '—'}</span>
+                <span className="text-text-secondary">{user.email}</span>
+                <Badge label={roleLabel(user.role)} color={roleColor(user.role) as any} />
+                <Badge label={user.isActive ? 'פעיל' : 'מושבת'} color={user.isActive ? 'green' : 'red'} />
+                <span className="text-text-secondary">{formatDate(user.createdAt)}</span>
+              </div>
+            )
+          })
+          return (user: any) => <UserRow key={user.id} user={user} />
+        }, [data?.data]))}
           </div>
         ))}
       </div>

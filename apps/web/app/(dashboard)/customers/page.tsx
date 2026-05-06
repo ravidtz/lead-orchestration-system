@@ -1,11 +1,31 @@
 'use client'
 import { PageShell, PageHeader } from '@/components/layout/page-shell'
-import { TableSkeleton, Badge, Button } from '@/components/ui'
-import { EmptyState } from '@/components/shared/empty-state'
+import dynamic from 'next/dynamic'
+import { Button } from '@/components/ui'
+const TableSkeleton = dynamic(() => import('@/components/ui/skeleton').then(m => m.TableSkeleton), { loading: () => null })
+const Badge = dynamic(() => import('@/components/ui/badge').then(m => m.Badge), { loading: () => null })
+const EmptyState = dynamic(() => import('@/components/shared/empty-state').then(m => m.EmptyState), { loading: () => null })
 import { useCustomers } from '@/hooks/use-customers'
 import { CUSTOMER_STATUSES, CUSTOMER_TIERS } from '@/lib/constants'
 import { formatDate } from '@/lib/utils'
 import Link from 'next/link'
+import React from 'react'
+
+const CustomerRow = React.memo(function CustomerRow({ customer, statusLabel, statusColor, tierLabel, formatDate }: { customer: any, statusLabel: any, statusColor: any, tierLabel: any, formatDate: any }) {
+  return (
+    <Link
+      key={customer.id}
+      href={`/customers/${customer.id}`}
+      className="grid grid-cols-[2fr_2fr_1fr_1fr_1fr] gap-4 px-4 py-3.5 border-b border-border last:border-0 hover:bg-border/50 transition-colors items-center text-sm"
+    >
+      <span className="font-medium text-text-primary">{customer.firstName} {customer.lastName}</span>
+      <span className="text-text-secondary">{customer.company ?? customer.email ?? '—'}</span>
+      <Badge label={statusLabel(customer.status)} color={statusColor(customer.status) as any} />
+      <span className="text-text-secondary">{tierLabel(customer.tier)}</span>
+      <span className="text-text-secondary">{formatDate(customer.createdAt)}</span>
+    </Link>
+  )
+})
 import { useState } from 'react'
 
 export default function CustomersPage() {
@@ -39,17 +59,14 @@ export default function CustomersPage() {
         )}
 
         {data?.data.map(customer => (
-          <Link
+          <CustomerRow
             key={customer.id}
-            href={`/customers/${customer.id}`}
-            className="grid grid-cols-[2fr_2fr_1fr_1fr_1fr] gap-4 px-4 py-3.5 border-b border-border last:border-0 hover:bg-border/50 transition-colors items-center text-sm"
-          >
-            <span className="font-medium text-text-primary">{customer.firstName} {customer.lastName}</span>
-            <span className="text-text-secondary">{customer.company ?? customer.email ?? '—'}</span>
-            <Badge label={statusLabel(customer.status)} color={statusColor(customer.status) as any} />
-            <span className="text-text-secondary">{tierLabel(customer.tier)}</span>
-            <span className="text-text-secondary">{formatDate(customer.createdAt)}</span>
-          </Link>
+            customer={customer}
+            statusLabel={statusLabel}
+            statusColor={statusColor}
+            tierLabel={tierLabel}
+            formatDate={formatDate}
+          />
         ))}
 
         {data && data.meta.totalPages > 1 && (

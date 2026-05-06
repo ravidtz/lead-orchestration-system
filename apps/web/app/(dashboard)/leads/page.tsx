@@ -1,11 +1,33 @@
 'use client'
 import { PageShell, PageHeader } from '@/components/layout/page-shell'
-import { Button, TableSkeleton, Badge } from '@/components/ui'
-import { EmptyState } from '@/components/shared/empty-state'
+import dynamic from 'next/dynamic'
+import { Button } from '@/components/ui'
+const TableSkeleton = dynamic(() => import('@/components/ui/skeleton').then(m => m.TableSkeleton), { loading: () => null })
+const Badge = dynamic(() => import('@/components/ui/badge').then(m => m.Badge), { loading: () => null })
+const EmptyState = dynamic(() => import('@/components/shared/empty-state').then(m => m.EmptyState), { loading: () => null })
 import { useLeads } from '@/hooks/use-leads'
 import { LEAD_STATUSES, LEAD_PRIORITIES } from '@/lib/constants'
 import { formatDate } from '@/lib/utils'
 import Link from 'next/link'
+import React from 'react'
+
+const LeadRow = React.memo(function LeadRow({ lead, statusLabel, statusColor, formatDate }: { lead: any, statusLabel: any, statusColor: any, formatDate: any }) {
+  return (
+    <Link
+      key={lead.id}
+      href={`/leads/${lead.id}`}
+      className="grid grid-cols-[2fr_2fr_1fr_1fr_1fr] gap-4 px-4 py-3.5 border-b border-border last:border-0 hover:bg-border/50 transition-colors items-center text-sm"
+    >
+      <span className="font-medium text-text-primary">
+        {lead.firstName} {lead.lastName}
+      </span>
+      <span className="text-text-secondary">{lead.company ?? lead.email ?? '—'}</span>
+      <Badge label={statusLabel(lead.status)} color={statusColor(lead.status) as any} />
+      <span className="text-text-secondary capitalize">{lead.priority}</span>
+      <span className="text-text-secondary">{formatDate(lead.createdAt)}</span>
+    </Link>
+  )
+})
 import { Plus } from 'lucide-react'
 import { useState } from 'react'
 
@@ -48,19 +70,13 @@ export default function LeadsPage() {
         )}
 
         {data?.data.map(lead => (
-          <Link
+          <LeadRow
             key={lead.id}
-            href={`/leads/${lead.id}`}
-            className="grid grid-cols-[2fr_2fr_1fr_1fr_1fr] gap-4 px-4 py-3.5 border-b border-border last:border-0 hover:bg-border/50 transition-colors items-center text-sm"
-          >
-            <span className="font-medium text-text-primary">
-              {lead.firstName} {lead.lastName}
-            </span>
-            <span className="text-text-secondary">{lead.company ?? lead.email ?? '—'}</span>
-            <Badge label={statusLabel(lead.status)} color={statusColor(lead.status) as any} />
-            <span className="text-text-secondary capitalize">{lead.priority}</span>
-            <span className="text-text-secondary">{formatDate(lead.createdAt)}</span>
-          </Link>
+            lead={lead}
+            statusLabel={statusLabel}
+            statusColor={statusColor}
+            formatDate={formatDate}
+          />
         ))}
 
         {/* Pagination */}
